@@ -1,0 +1,121 @@
+#!/bin/bash
+shopt -s extglob
+
+function package_name_verify() {
+    if [ -z "${2}" ]; then
+        echo "Usage: ${0} ${1} <package_name>"
+        exit 1
+    fi
+}
+
+function package_support_verify() {
+    package=$(ls ./packages/ | grep "${1}".sh)
+    if [ -z "${package}" ]; then
+        echo "Don't support ${1}"
+        exit 1
+    fi
+}
+
+function pacscript_support_verify() {
+    pacscript=$(ls ./pacscripts/ | grep "${1}".pacscript)
+    if [ -z "${pacscript}" ]; then
+        echo "Don't support ${1}"
+        exit 1
+    fi
+}
+
+function package_call_function() {
+    chmod +x ./packages/"${2}".sh
+    ./packages/"${2}".sh "${1}"
+}
+
+function list() {
+    echo "Available packages:"
+    packages=$(ls ./packages)
+    for el in ${packages}; do
+        pkg=$(cut -d'.' -f1 <<<"${el}")
+        echo "    ""${pkg}" "("$(package_call_function "version" "${pkg}")")"
+    done
+}
+
+function file() {
+    package_name_verify "${1}" "${2}"
+    package_support_verify "${2}"
+
+    cat ./pacscripts/"${2}".pacscript
+}
+
+function update() {
+    if [ -z "${2}" ]; then
+        echo "Searching for the latest version's..."
+        packages=$(ls ./packages)
+        for el in ${packages}; do
+            pkg=$(cut -d'.' -f1 <<<"${el}")
+            package_call_function "update" "${pkg}"
+        done
+    else
+        package_name_verify "${1}" "${2}"
+        package_support_verify "${2}"
+
+        package_call_function "update" "${2}"
+    fi
+}
+
+function upgrade() {
+    package_name_verify "${1}" "${2}"
+    package_support_verify "${2}"
+
+    package_call_function "upgrade" "${2}"
+}
+
+function install() {
+    package_name_verify "${1}" "${2}"
+    pacscript_support_verify "${2}"
+
+    pacstall -I ./pacscripts/"${2}".pacscript
+}
+
+function remove() {
+    package_name_verify "${1}" "${2}"
+    pacscript_support_verify "${2}"
+
+    pacstall -R "${2}"
+}
+
+function cli() {
+    local args=("${*}")
+    command="${1}"
+
+    if [ -z "${command}" ]; then
+        echo "Usage: $0 <command>"
+        exit 1
+    fi
+
+    case "${command}" in
+    update)
+        update $args
+        ;;
+    upgrade)
+        upgrade $args
+        ;;
+    install)
+        install $args
+        ;;
+    remove)
+        remove $args
+        ;;
+    file)
+        file $args
+        ;;
+    list)
+        list
+        ;;
+    *)
+        echo "Usage: $0 <command>"
+        exit 1
+        ;;
+    esac
+}
+
+declare args=("${*}")
+cli $args
