@@ -16,7 +16,7 @@ function get_url() {
     arch="${1}"
     version="${2}"
 
-    echo "${BASE_URL}code-insiders_\${version}-$(curl -s "${BASE_URL}" | grep "${version}" | grep "${arch}" | cut -d'>' -f2 | cut -d'<' -f1 | tail -n 1 | cut -d'_' -f2 | cut -d'-' -f2)_${arch}.deb"
+    echo "${BASE_URL}code-insiders_\${pkgversion}-$(curl -s "${BASE_URL}" | grep "${version}" | grep "${arch}" | cut -d'>' -f2 | cut -d'<' -f1 | tail -n 1 | cut -d'_' -f2 | cut -d'-' -f2)_${arch}.deb"
 }
 
 function get_hash() {
@@ -24,7 +24,7 @@ function get_hash() {
     version="${2}"
 
     url="${BASE_URL}$(curl -s "${BASE_URL}" | grep "${version}" | grep "${arch}" | cut -d'>' -f2 | cut -d'<' -f1 | tail -n 1)"
-    curl -s "${url}" -o - | sha256sum | cut -d' ' -f1
+    curl "${url}" -o - | sha256sum | cut -d' ' -f1
 }
 
 function update() {
@@ -46,7 +46,8 @@ function upgrade() {
     {
         echo "arch=(\"amd64\" \"arm64\" \"armhf\")"
         echo "gives=\"code-insiders\""
-        echo "version=\"${version}\""
+        echo "version=\"${version}-insiders\""
+        echo "pkgversion=\"${version}\""
         echo "homepage=\"https://code.visualstudio.com/\""
         echo "description=\"lightweight but powerful source code editor\""
         echo "project=(\"project: vscode-insiders\")"
@@ -90,7 +91,7 @@ function cli() {
         upgrade
         ;;
     version)
-        get_value 'version'
+        get_value 'pkgversion'
         ;;
     *)
         exit 1
