@@ -6,12 +6,11 @@
 #
 # Versions
 #
-# v0.1: Project Start, with the basic implementation of a test function to be imported, using `source $STD` and used in other scripts called by the pmt tool with `STD_test`.
+# 0.1: Project Start, with the basic implementation of a test function to be imported, using `source $STD` and used in other scripts called by the pmt tool with `STD_test`.
+# 0.2: Removed the test function. Implemented the initial version of the Strings sub-library, which provides functions for string manipulation.
 #
 # Maintained by Diegiwg
 # Copyright (c) 2023
 #
 
-function STD_test() {
-    echo "Testing STD library..."
-}
+source "./libs/Strings.sh"

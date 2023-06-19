@@ -116,9 +116,6 @@ function cli() {
     list)
         list
         ;;
-    test)
-        STD_test
-        ;;
     *)
         echo "Usage: $0 <command>"
         exit 1
