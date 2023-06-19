@@ -1,4 +1,5 @@
 #!/bin/bash
+source $STD
 
 declare FILE="./pacscripts/vscode-insiders-deb.pacscript"
 declare BASE_URL="https://packages.microsoft.com/repos/code/pool/main/c/code-insiders/"
@@ -24,7 +25,7 @@ function get_hash() {
     version="${2}"
 
     url="${BASE_URL}$(curl -s "${BASE_URL}" | grep "${version}" | grep "${arch}" | cut -d'>' -f2 | cut -d'<' -f1 | tail -n 1)"
-    curl "${url}" -o - | sha256sum | cut -d' ' -f1
+    Hash.from_url "${url}"
 }
 
 function update() {
