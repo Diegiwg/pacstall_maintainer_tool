@@ -1,5 +1,11 @@
 #!/bin/bash
+#
 shopt -s extglob
+#
+# Import and Source the STD::Library
+export STD="./libs/std.sh"
+source $STD
+#
 
 function package_name_verify() {
     if [ -z "${2}" ]; then
@@ -109,6 +115,9 @@ function cli() {
         ;;
     list)
         list
+        ;;
+    test)
+        STD_test
         ;;
     *)
         echo "Usage: $0 <command>"
