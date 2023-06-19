@@ -1,49 +1,48 @@
 #!/bin/bash
 source $STD
 
-declare FILE="./pacscripts/vscode-deb.pacscript"
-declare BASE_URL="https://packages.microsoft.com/repos/code/pool/main/c/code/"
+SCRIPT_PATH="./pacscripts/vscode-deb.pacscript"
+SOURCE_BASE_URL="https://packages.microsoft.com/repos/code/pool/main/c/code/"
 
-function get_value() {
-    key=${1}
-    grep "${key}=" <"${FILE}" | cut -d "\"" -f2
+function get_last_version() {
+    curl -s "${SOURCE_BASE_URL}" | grep -oP '(?<=code_)[^-]*' | tail -n 1
 }
 
-function get_latest_version() {
-    curl -s "${BASE_URL}" | grep -oP '\d+\.\d+\.\d+' | tail -n 1
-}
+function get_file_url() {
+    e_arch="${1}"
 
-function get_url() {
-    arch="${1}"
-    version="${2}"
+    version=$(get_last_version)
+    hash=$(curl -s "${SOURCE_BASE_URL}" | grep -oP "(?<=${version}-)[^.]*(?=_${e_arch})" | tail -n 1)
 
-    echo "${BASE_URL}code_\${version}-$(curl -s "${BASE_URL}" | grep "${version}" | grep "${arch}" | cut -d'>' -f2 | cut -d'<' -f1 | tail -n 1 | cut -d'_' -f2 | cut -d'-' -f2)_${arch}.deb"
+    if [ "${2}" == '-vars' ]; then
+        echo "${SOURCE_BASE_URL}code_\${version}-${hash}_\${arch}.deb"
+    else
+        echo "${SOURCE_BASE_URL}code_${version}-${hash}_${e_arch}.deb"
+    fi
 }
 
 function get_hash() {
-    arch="${1}"
-    version="${2}"
+    e_arch="${1}"
+    url=$(get_file_url "${e_arch}")
 
-    url="${BASE_URL}$(curl -s "${BASE_URL}" | grep "${version}" | grep "${arch}" | cut -d'>' -f2 | cut -d'<' -f1 | tail -n 1)"
     Hash.from_url "${url}"
 }
 
 function update() {
-    current_version=$(get_value 'version')
-    latest_version=$(get_latest_version)
+    current_version=$(Pacscript.get_value $SCRIPT_PATH 'version')
+    last_version=$(get_last_version)
 
-    if [ "${current_version}" != "${latest_version}" ]; then
-        echo "The $(get_value 'name') package is not up to date. Upgrade from ${current_version} to ${latest_version}."
+    if [ "${current_version}" != "${last_version}" ]; then
+        echo "The $(Pacscript.get_value $SCRIPT_PATH 'name') package is not up to date. Upgrade from ${current_version} to ${last_version}."
     else
-        echo "The $(get_value 'name') package is up to date. Latest version is ${current_version}."
+        echo "The $(Pacscript.get_value $SCRIPT_PATH 'name') package is up to date. Latest version is ${current_version}."
     fi
-
 }
 
 function upgrade() {
-    version=$(get_latest_version)
+    version=$(get_last_version)
 
-    echo "name=\"vscode-deb\"" >${FILE}
+    echo "name=\"vscode-deb\"" >${SCRIPT_PATH}
     {
         echo "arch=(\"amd64\" \"arm64\" \"armhf\")"
         echo "gives=\"code\""
@@ -55,49 +54,37 @@ function upgrade() {
         echo
         echo "case \"\${CARCH}\" in"
         echo "  amd64)"
-        echo "    url=\"$(get_url amd64 "${version}")\""
-        echo "    hash=\"$(get_hash amd64 "${version}")\""
+        echo "    url=\"$(get_file_url amd64 -vars)\""
+        echo "    hash=\"$(get_hash amd64)\""
         echo "    ;;"
         echo "  arm64)"
-        echo "    url=\"$(get_url arm64 "${version}")\""
-        echo "    hash=\"$(get_hash arm64 "${version}")\""
+        echo "    url=\"$(get_file_url arm64 -vars)\""
+        echo "    hash=\"$(get_hash arm64)\""
         echo "    ;;"
         echo "  armhf)"
-        echo "    url=\"$(get_url armhf "${version}")\""
-        echo "    hash=\"$(get_hash armhf "${version}")\""
+        echo "    url=\"$(get_file_url armhf -vars)\""
+        echo "    hash=\"$(get_hash armhf)\""
         echo "    ;;"
         echo "  *) return 1 ;;"
         echo "esac"
-    } >>${FILE}
+    } >>${SCRIPT_PATH}
 
-    echo "Successfully upgraded the $(get_value 'name') pacscript."
-
+    echo "Successfully upgraded the $(Pacscript.get_value $SCRIPT_PATH 'name') pacscript."
 }
 
-function cli() {
-    local args=("${*}")
-    command="${1}"
+# MAIN #
 
-    if [ -z "${command}" ]; then
-        echo "Usage: $0 <command>"
-        exit 1
-    fi
-
-    case "${command}" in
-    update)
-        update
-        ;;
-    upgrade)
-        upgrade
-        ;;
-    version)
-        get_value 'version'
-        ;;
-    *)
-        exit 1
-        ;;
-    esac
-}
-
-declare args=("${*}")
-cli $args
+case "${1}" in
+update)
+    update
+    ;;
+upgrade)
+    upgrade
+    ;;
+version)
+    Pacscript.get_value $SCRIPT_PATH 'version'
+    ;;
+*)
+    exit 1
+    ;;
+esac
