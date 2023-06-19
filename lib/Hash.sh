@@ -4,6 +4,7 @@
 #
 # Version
 # 0.1: Initial version of the library, with only function for hash a file in URl
+# 0.2: Fixing the function for hash a file in URL
 #
 # Maintained by Diegiwg
 # Copyright (c) 2023
@@ -39,20 +40,22 @@
 #
 
 function Hash.from_url() {
-    e_url="${1}?'Usage: from_url <url_string>'"
+    e_url="${1}"
+    if [ -z "${e_url}" ]; then
+        echo "Usage: from_url <url_string> [algorithm]"
+        return 1
+    fi
 
     e_algorithm="sha256"
     if [ -n "${2}" ]; then
         e_algorithm="${2}"
     fi
 
-    file=$(curl -s "${e_url}")
-
     local hash
     case "${e_algorithm}" in
     sha1)
         if command -v sha1sum >/dev/null; then
-            hash=$(sha1sum <<<"${file}")
+            hash=$(curl -s "${e_url}" -o - | sha1sum)
         else
             echo "Algorithm not supported on the host system"
             return 1
@@ -60,7 +63,7 @@ function Hash.from_url() {
         ;;
     sha224)
         if command -v sha224sum >/dev/null; then
-            hash=$(sha224sum <<<"${file}")
+            hash=$(curl -s "${e_url}" -o - | sha224sum)
         else
             echo "Algorithm not supported on the host system"
             return 1
@@ -68,7 +71,7 @@ function Hash.from_url() {
         ;;
     sha256)
         if command -v sha256sum >/dev/null; then
-            hash=$(sha256sum <<<"${file}")
+            hash=$(curl -s "${e_url}" -o - | sha256sum)
         else
             echo "Algorithm not supported on the host system"
             return 1
@@ -76,7 +79,7 @@ function Hash.from_url() {
         ;;
     sha384)
         if command -v sha384sum >/dev/null; then
-            hash=$(sha384sum <<<"${file}")
+            hash=$(curl -s "${e_url}" -o - | sha384sum)
         else
             echo "Algorithm not supported on the host system"
             return 1
@@ -84,7 +87,7 @@ function Hash.from_url() {
         ;;
     sha512)
         if command -v sha512sum >/dev/null; then
-            hash=$(sha512sum <<<"${file}")
+            hash=$(curl -s "${e_url}" -o - | sha512sum)
         else
             echo "Algorithm not supported on the host system"
             return 1
