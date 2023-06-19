@@ -13,4 +13,4 @@
 # Copyright (c) 2023
 #
 
-source "./libs/Strings.sh"
+source "./lib/Strings.sh"

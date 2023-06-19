@@ -3,7 +3,7 @@
 shopt -s extglob
 #
 # Import and Source the STD::Library
-export STD="./libs/std.sh"
+export STD="./lib/std.sh"
 source $STD
 #
 
